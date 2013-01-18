@@ -5,8 +5,8 @@ import (
 )
 
 func main() {
-	var si gameserver.ServerInfo
-	si.Name = "Test Server"
-	si.Port = 9989
-	gameserver.StartServer(si)
+	var gs gameserver.GameServer
+	gs.Name = "Test Server"
+	gs.Port = 9989
+	gs.Init()
 }

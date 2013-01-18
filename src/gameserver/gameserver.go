@@ -1,65 +1,56 @@
 package gameserver
 
 import (
-	"bufio"
 	"fmt"
-	"io"
 	"net"
+	"strconv"
 )
 
-type ServerInfo struct {
-	Name string // the name of the server
-	Port int //the port to liosten on
+var version string = "0.0.3"
+
+type GameServer struct {
+	Name       string // the name of the server
+	Port       int    //the port to listen on
+	ListenConn net.Listener
 }
 
-var nl byte = 10
+type User struct {
+	Id   int
+	Name string
+	Conn net.Conn
+}
 
-func echo(conn *net.TCPConn) {
-	addr := conn.RemoteAddr()
-	rw := bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
+func (gs GameServer) facilitator() error {
+	ln := gs.ListenConn
 	for {
-		s, err := rw.ReadString(nl)
-		if len(s) > 0 {
-			fmt.Printf("conn %s said %d %s\n", addr, len(s), s)
-			rw.WriteString(s)
-			rw.Flush()
-		} else if err == io.EOF {
-			fmt.Printf("conn %s eof\n", addr)
-			conn.Close()
-			return
-		} else {
-			fmt.Printf("error reading: %s\n", err)
-			conn.Close()
-			return
+		conn, err := ln.Accept()
+		if conn == nil {
+			fmt.Printf("accept error: %s\n", err)
+			ln.Close()
+			return err
 		}
-		if s == "quit\r\n" {
-			conn.Close()
-			return
-		}
+		fmt.Printf("connection from %s\n", conn.RemoteAddr())
+		user := new(User)
+		user.Conn = conn
+		go user.listener()
 	}
-}
 
+	return nil
+}
 
 /*
 
 */
-func StartServer(si ServerInfo) (ServerInfo, error) {
-	l, err := net.ListenTCP("tcp4", &net.TCPAddr{net.IPv4zero, si.Port})
-	if l == nil {
+func (gs GameServer) Init() error {
+	fmt.Println("GO Game Server", version, "by Jonathan Shahen 2013")
+	ln, err := net.Listen("tcp", ":"+strconv.Itoa(gs.Port))
+	if ln == nil {
 		fmt.Printf("cannot listen: %s\n", err)
-		return si, err
+		return err
 	}
-	fmt.Printf("listening at %s\n", l.Addr())
-	for {
-		conn, err := l.AcceptTCP()
-		if conn == nil {
-			fmt.Printf("accept error: %s\n", err)
-			l.Close()
-			return si, err
-		}
-		fmt.Printf("connection from %s\n", conn.RemoteAddr())
-		go echo(conn)
-	}
+	fmt.Printf("listening at %s\n", ln.Addr())
 
-	return si, err
+	gs.ListenConn = ln
+
+	return gs.facilitator()
 }
