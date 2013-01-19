@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-var version string = "0.0.4"
+var version string = "0.0.5"
 var terminator byte = '|'
 
 func main() {
@@ -32,6 +32,17 @@ func main() {
 	}
 
 	var bconn = bufio.NewReader(con)
+	status, error := bconn.ReadString(terminator)
+	if error != nil {
+		fmt.Println("Error reading data:", error, ", in:", status)
+		os.Exit(2)
+	}
+	if status == "Success"+string(terminator) {
+		fmt.Println("Successfully connected to the server!")
+	} else {
+		fmt.Println("An internal server error occured:", status)
+		os.Exit(500)
+	}
 
 	for {
 		fmt.Println("Message:", msg)

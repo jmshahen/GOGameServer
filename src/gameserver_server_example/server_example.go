@@ -9,6 +9,8 @@ func main() {
 	gs.Name = "Test Server"
 	gs.Port = 9989
 	gs.BufferSize = 10
+	gs.NumWorkers = 10
+	gs.MaxUsersPerWorker = 5
 	gs.Terminator = '|'
 	gs.Init()
 }
