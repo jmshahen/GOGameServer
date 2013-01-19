@@ -41,6 +41,7 @@ func (wi WorkerInfo) worker() {
 }
 
 func (wi WorkerInfo) sayGoodbye() {
+	fmt.Println("[Worker", wi.Id, "] Saying goodbye to all my users")
 	for _, user := range wi.users {
 		user.SendMessage("Goodbye")
 	}

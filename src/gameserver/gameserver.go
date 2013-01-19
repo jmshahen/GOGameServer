@@ -8,13 +8,14 @@ import (
 	"time"
 )
 
-var version string = "0.0.6"
+var version string = "0.1.0"
 
 type GameServer struct {
 	Name       string // the name of the server
 	Port       int    //the port to listen on
 	ListenConn net.Listener
 	workers    []WorkerInfo
+	UserCount  int
 	//User Settings
 	NumWorkers        int
 	BufferSize        int
@@ -67,6 +68,8 @@ func (gs GameServer) facilitator() error {
 		fmt.Println("connection from", conn.RemoteAddr())
 
 		user := new(UserInfo)
+		user.Id = gs.UserCount
+		gs.UserCount++
 		user.Conn = conn
 		user.rw = bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn))
 		user.ch = make(chan WorkerJob, gs.BufferSize)
