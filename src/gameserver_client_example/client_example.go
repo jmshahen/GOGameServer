@@ -7,10 +7,12 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
-var version string = "0.0.2"
+var version string = "0.0.4"
+var terminator byte = '|'
 
 func main() {
 	fmt.Println("GO Game Server Client Example", version, "by Jonathan Shahen 2013")
@@ -19,7 +21,7 @@ func main() {
 		host   = "127.0.0.1"
 		port   = "9989"
 		remote = host + ":" + port
-		msg    = "Random Number: " + strconv.Itoa(rand.Intn(9999)) + "\n"
+		msg    = "Random Number: " + strconv.Itoa(rand.Intn(9999)) + "|"
 	)
 
 	con, error := net.Dial("tcp", remote)
@@ -29,21 +31,43 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("Message:", msg)
-	in, error := con.Write([]byte(msg))
-	if error != nil {
-		fmt.Println("Error sending data:", error, ", in:", in)
-		os.Exit(2)
+	var bconn = bufio.NewReader(con)
+
+	for {
+		fmt.Println("Message:", msg)
+		in, error := con.Write([]byte(msg))
+		if error != nil {
+			fmt.Println("Error sending data:", error, ", in:", in)
+			os.Exit(2)
+		}
+
+		fmt.Println("in:", in)
+
+		status, error := bconn.ReadString(terminator)
+		if error != nil {
+			fmt.Println("Error reading data:", error, ", in:", status)
+			os.Exit(2)
+		}
+
+		fmt.Println("Response:", status)
+
+		fmt.Print("Your Message: ")
+		n, errs := fmt.Scan(&msg)
+		fmt.Println("n:", n, "| errs:", errs)
+
+		//msg = "Random Number: " + strconv.Itoa(rand.Intn(9999)) + "\n"
+
+		if msg == "quit" {
+			fmt.Println("Sending the QUIT command.")
+			break
+		}
+		if !strings.HasSuffix(msg, string(terminator)) {
+			fmt.Println("Putting", terminator, "at the end of msg", len(msg))
+			msg = msg + string(terminator)
+		}
 	}
 
-	status, error := bufio.NewReader(con).ReadString('\n')
-	if error != nil {
-		fmt.Println("Error sending data:", error, ", in:", in)
-		os.Exit(2)
-	}
-
-	fmt.Println("Response:", status)
-
-	fmt.Fprintf(con, "quit\r\n")
+	fmt.Fprintf(con, "quit|")
 	con.Close()
+	fmt.Println("Goodbye.")
 }

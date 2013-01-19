@@ -6,18 +6,23 @@ import (
 	"strconv"
 )
 
-var version string = "0.0.3"
+var version string = "0.0.4"
 
 type GameServer struct {
 	Name       string // the name of the server
 	Port       int    //the port to listen on
 	ListenConn net.Listener
+	NumWorkers int
+	BufferSize int
+	Terminator byte
 }
 
 type User struct {
-	Id   int
-	Name string
-	Conn net.Conn
+	Id         int
+	Name       string
+	Conn       net.Conn
+	ch         chan string
+	terminator byte
 }
 
 func (gs GameServer) facilitator() error {
@@ -32,6 +37,8 @@ func (gs GameServer) facilitator() error {
 		fmt.Printf("connection from %s\n", conn.RemoteAddr())
 		user := new(User)
 		user.Conn = conn
+		user.ch = make(chan string, gs.BufferSize)
+		user.terminator = gs.Terminator
 		go user.listener()
 	}
 
