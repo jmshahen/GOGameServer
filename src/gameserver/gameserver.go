@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-var version string = "0.0.5"
+var version string = "0.0.6"
 
 type GameServer struct {
 	Name       string // the name of the server

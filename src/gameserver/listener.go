@@ -3,6 +3,7 @@ package gameserver
 import (
 	"fmt"
 	"io"
+	"strings"
 )
 
 func (user UserInfo) listener() {
@@ -39,6 +40,9 @@ func (user UserInfo) listener() {
 }
 
 func (user UserInfo) SendMessage(s string) error {
-	user.rw.WriteString(s + string(user.terminator))
+	if !strings.HasSuffix(s, string(user.terminator)) {
+		s = s + string(user.terminator)
+	}
+	user.rw.WriteString(s)
 	return user.rw.Flush()
 }

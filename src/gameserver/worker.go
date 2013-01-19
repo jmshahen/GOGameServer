@@ -6,6 +6,7 @@ import (
 
 func (wi WorkerInfo) worker() {
 	fmt.Println("Worker", wi.Id, "started")
+	defer wi.sayGoodbye()
 	var quit = false
 	for {
 		fmt.Println("[Worker", wi.Id, "]Waitng for work")
@@ -15,7 +16,6 @@ func (wi WorkerInfo) worker() {
 		select {
 		case <-wi.quit:
 			fmt.Println("worker", wi.Id, "quitting")
-			wi.sayGoodbye()
 			quit = true
 			break
 		case user := <-wi.addUser:
