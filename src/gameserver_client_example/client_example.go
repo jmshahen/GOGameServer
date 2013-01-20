@@ -11,8 +11,9 @@ import (
 	"time"
 )
 
-var version string = "0.0.5"
+var version string = "0.0.6"
 var terminator byte = '|'
+var separator byte = '&'
 
 func main() {
 	fmt.Println("GO Game Server Client Example", version, "by Jonathan Shahen 2013")
@@ -46,7 +47,7 @@ func main() {
 
 	for {
 		fmt.Println("Message:", msg)
-		in, error := con.Write([]byte(msg))
+		in, error := con.Write([]byte(MakeEchoPacket(msg)))
 		if error != nil {
 			fmt.Println("Error sending data:", error, ", in:", in)
 			os.Exit(2)
@@ -72,13 +73,23 @@ func main() {
 			fmt.Println("Sending the QUIT command.")
 			break
 		}
-		if !strings.HasSuffix(msg, string(terminator)) {
-			fmt.Println("Putting", terminator, "at the end of msg", len(msg))
-			msg = msg + string(terminator)
-		}
 	}
 
-	fmt.Fprintf(con, "quit|")
+	fmt.Fprintf(con, MakeQuitPacket(""))
 	con.Close()
 	fmt.Println("Goodbye.")
+}
+
+func MakeQuitPacket(s string) string {
+	if !strings.HasSuffix(s, string(terminator)) {
+		s = s + string(terminator)
+	}
+	return "QUIT" + string(separator) + s
+}
+
+func MakeEchoPacket(s string) string {
+	if !strings.HasSuffix(s, string(terminator)) {
+		s = s + string(terminator)
+	}
+	return "ECHO" + string(separator) + s
 }

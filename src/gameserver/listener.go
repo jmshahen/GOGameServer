@@ -1,8 +1,9 @@
 package gameserver
 
 import (
-	"fmt"
-	"io"
+	// "io"
+	// "net"
+	// "reflect"
 	"strings"
 )
 
@@ -11,28 +12,29 @@ func (user UserInfo) listener() {
 	addr := conn.RemoteAddr()
 	rw := user.rw
 	for {
-		s, err := rw.ReadString(user.terminator)
+		s, err := rw.ReadString(user.gs.Terminator)
 		if len(s) > 0 {
-			fmt.Println("conn", addr, "said", len(s), s)
+			logger.Println("[ Listener ] conn", addr, "said", len(s), s)
+
+			job, jerr := user.gs.Decode(s)
+			if jerr != nil {
+				logger.Println("[ Listener ] Error decoding packet: ", jerr)
+				continue
+			}
 			select {
-			case user.ch <- WorkerJob{s}:
-				fmt.Println("[listener] DoWork", user.doWork)
+			case user.ch <- job:
+				//logger.Println("[listener] DoWork", user.doWork)
 				user.doWork <- true //TODO put select statement so it doesn't block
 			default:
-				fmt.Println("Channel buffer is currently full")
+				logger.Println("[ Listener ] Channel buffer is currently full")
 				user.SendMessage("Buffer Is Full")
 			}
-		} else if err == io.EOF {
-			fmt.Println("conn", addr, "eof")
-			conn.Close()
-			return
 		} else {
-			fmt.Println("error reading:", err)
-			conn.Close()
-			return
-		}
-		if s == "quit"+string(user.terminator) {
-			fmt.Println("client sent quiting command")
+			logger.Printf("[ Listener ] Connection with user lost %#v\n", err)
+
+			user.doWork <- true //is allowed to block
+			user.ch <- QUITJob
+
 			conn.Close()
 			return
 		}
@@ -40,8 +42,8 @@ func (user UserInfo) listener() {
 }
 
 func (user UserInfo) SendMessage(s string) error {
-	if !strings.HasSuffix(s, string(user.terminator)) {
-		s = s + string(user.terminator)
+	if !strings.HasSuffix(s, string(user.gs.Terminator)) {
+		s = s + string(user.gs.Terminator)
 	}
 	user.rw.WriteString(s)
 	return user.rw.Flush()

@@ -1,35 +1,34 @@
 package gameserver
 
 import (
-	"fmt"
+// "fmt"
 )
 
 func (wi WorkerInfo) worker() {
-	fmt.Println("Worker", wi.Id, "started")
 	defer wi.sayGoodbye()
 	var quit = false
 	for {
-		fmt.Println("[Worker", wi.Id, "]Waitng for work")
+		wi.logMsg("Waitng for work")
 		<-wi.doWork
-		fmt.Println("There is work to be done!")
+		wi.logMsg("There is work to be done!")
 
 		select {
 		case <-wi.quit:
-			fmt.Println("worker", wi.Id, "quitting")
+			wi.logMsg("Quitting")
 			quit = true
 			break
 		case user := <-wi.addUser:
-			fmt.Println("Worker", wi.Id, "Added User", user.Id)
-			wi.users = append(wi.users, user)
+			wi.logMsg("Added User", user.Id)
+			wi.users[user.Id] = user
 		default:
 			for _, user := range wi.users {
 				select {
 				case job := <-user.ch:
-					fmt.Println("worker", wi.Id, "processing job from user", user.Id)
-					fmt.Println("job:", job)
-					user.SendMessage(job.msg)
+					wi.logMsg("Processing job from user", user.Id)
+					wi.logMsg("job:", job)
+					job.Run(wi, user, job.Data)
 				default:
-					fmt.Println("No Work from User", user.Id)
+					//wi.logMsg("No Work from User", user.Id)
 				}
 			}
 		}
@@ -37,12 +36,16 @@ func (wi WorkerInfo) worker() {
 			break
 		}
 	}
-	fmt.Println("Worker", wi.Id, "Shutting down")
+	wi.logMsg("Is Shutdown")
 }
 
 func (wi WorkerInfo) sayGoodbye() {
-	fmt.Println("[Worker", wi.Id, "] Saying goodbye to all my users")
+	wi.logMsg("Saying goodbye to all my users")
 	for _, user := range wi.users {
 		user.SendMessage("Goodbye")
 	}
+}
+
+func (wi WorkerInfo) logMsg(s ...interface{}) {
+	logger.Println("[ Worker", wi.Id, "]", s)
 }

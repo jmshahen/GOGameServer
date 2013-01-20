@@ -2,6 +2,8 @@ package main
 
 import (
 	"gameserver"
+	"log"
+	"os"
 )
 
 func main() {
@@ -12,5 +14,6 @@ func main() {
 	gs.NumWorkers = 3
 	gs.MaxUsersPerWorker = 2
 	gs.Terminator = '|'
-	gs.Init()
+	gs.Separator = '&'
+	gs.Init(log.New(os.Stdout, "[GameServer]", log.LstdFlags|log.Lshortfile))
 }
