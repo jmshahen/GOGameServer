@@ -23,49 +23,52 @@ func main() {
 		port   = "9989"
 		remote = host + ":" + port
 		msg    = "Random Number: " + strconv.Itoa(rand.Intn(9999)) + "|"
+		err    error
 	)
 
-	con, error := net.Dial("tcp", remote)
+	con, err := net.Dial("tcp", remote)
 
-	if error != nil {
-		fmt.Printf("Host not found: %s\n", error)
+	if err != nil {
+		fmt.Printf("Host not found: %s\n", err)
 		os.Exit(1)
 	}
 
 	var bconn = bufio.NewReader(con)
-	status, error := bconn.ReadString(terminator)
-	if error != nil {
-		fmt.Println("Error reading data:", error, ", in:", status)
+	status, err := bconn.ReadString(terminator)
+	if err != nil {
+		fmt.Println("Error reading data:", err, ", in:", status)
 		os.Exit(2)
 	}
 	if status == "Success"+string(terminator) {
 		fmt.Println("Successfully connected to the server!")
 	} else {
-		fmt.Println("An internal server error occured:", status)
+		fmt.Println("An internal server err occured:", status)
 		os.Exit(500)
 	}
 
+	var stdinR = bufio.NewReader(os.Stdin)
+
 	for {
 		fmt.Println("Message:", msg)
-		in, error := con.Write([]byte(MakeEchoPacket(msg)))
-		if error != nil {
-			fmt.Println("Error sending data:", error, ", in:", in)
+		in, err := con.Write([]byte(MakeEchoPacket(msg)))
+		if err != nil {
+			fmt.Println("Error sending data:", err, ", in:", in)
 			os.Exit(2)
 		}
 
-		fmt.Println("in:", in)
-
-		status, error := bconn.ReadString(terminator)
-		if error != nil {
-			fmt.Println("Error reading data:", error, ", in:", status)
+		status, err := bconn.ReadString(terminator)
+		if err != nil {
+			fmt.Println("Error reading data:", err, ", in:", status)
 			os.Exit(2)
 		}
 
 		fmt.Println("Response:", status)
 
 		fmt.Print("Your Message: ")
-		n, errs := fmt.Scan(&msg)
-		fmt.Println("n:", n, "| errs:", errs)
+		// n, err := fmt.Scanln(os.Stdin, &msg)
+		// fmt.Println("n:", n, "| err:", err)
+		msg, err = stdinR.ReadString('\n')
+		fmt.Println("| err:", err)
 
 		//msg = "Random Number: " + strconv.Itoa(rand.Intn(9999)) + "\n"
 
@@ -81,6 +84,9 @@ func main() {
 }
 
 func MakeQuitPacket(s string) string {
+	//strips off the new line at the end of the string
+	s = strings.TrimRight(s, "\r\n ")
+
 	if !strings.HasSuffix(s, string(terminator)) {
 		s = s + string(terminator)
 	}
@@ -88,6 +94,9 @@ func MakeQuitPacket(s string) string {
 }
 
 func MakeEchoPacket(s string) string {
+	//strips off the new line at the end of the string
+	s = strings.TrimRight(s, "\r\n ")
+
 	if !strings.HasSuffix(s, string(terminator)) {
 		s = s + string(terminator)
 	}

@@ -2,11 +2,9 @@ package gameserver
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"net"
 	"strconv"
-	"time"
 )
 
 var version string = "0.1.1"
@@ -43,15 +41,6 @@ type WorkerInfo struct {
 	addUser chan UserInfo
 	quit    chan bool
 	doWork  chan bool
-}
-
-type ServerError struct {
-	When time.Time
-	What string
-}
-
-func (e *ServerError) Error() string {
-	return fmt.Sprintf("at %v, %s", e.When, e.What)
 }
 
 func (gs GameServer) facilitator() error {
@@ -99,10 +88,7 @@ func (gs GameServer) AddUserToWorker(user *UserInfo) (*WorkerInfo, error) {
 		}
 	}
 
-	return nil, &ServerError{
-		time.Now(),
-		"Server Full",
-	}
+	return nil, NewServerError("Server Full")
 }
 
 /*
