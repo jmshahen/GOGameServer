@@ -20,3 +20,21 @@ func NewServerError(s string) error {
 		s,
 	}
 }
+
+type NetworkError struct {
+	When time.Time
+	What string
+	Msg  string
+}
+
+func (e *NetworkError) Error() string {
+	return fmt.Sprintf("at %v, %s\n\"%s\"", e.When, e.What, e.Msg)
+}
+
+func NewNetworkError(what string, msg string) error {
+	return &NetworkError{
+		time.Now(),
+		what,
+		msg,
+	}
+}

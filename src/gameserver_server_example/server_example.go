@@ -13,7 +13,10 @@ func main() {
 	gs.BufferSize = 2
 	gs.NumWorkers = 3
 	gs.MaxUsersPerWorker = 2
+
 	gs.Terminator = '|'
 	gs.Separator = '&'
+
+	gs.Services = append(gs.Services, gameserver.BasicService)
 	gs.Init(log.New(os.Stdout, "[GameServer]", log.LstdFlags|log.Lshortfile))
 }
