@@ -16,9 +16,15 @@ func (user UserInfo) listener() {
 		if len(s) > 0 {
 			logger.Println("[ Listener ] conn", addr, "said", len(s), s)
 
-			job, jerr := user.gs.Decode(s)
+			packet, perr := user.gs.DecodeString(s)
+			if perr != nil {
+				logger.Println("[ Listener ] Error decoding packet: ", perr)
+				continue
+			}
+
+			job, jerr := user.gs.DecodePacket(packet)
 			if jerr != nil {
-				logger.Println("[ Listener ] Error decoding packet: ", jerr)
+				logger.Println("[ Listener ] Error decoding job: ", jerr)
 				continue
 			}
 			select {

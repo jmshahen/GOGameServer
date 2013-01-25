@@ -6,7 +6,7 @@ import (
 
 type Packet struct {
 	Header string
-	Body   []string
+	Data   []string
 }
 
 func (gs GameServer) SafePacketString(s string) bool {
@@ -23,7 +23,7 @@ func (gs GameServer) DecodeString(s string) (Packet, error) {
 		return p, NewNetworkError("Invalid Packet Format", s)
 	}
 	p.Header = z[0]
-	p.Body = z[1:]
+	p.Data = z[1:]
 
 	return p, nil
 }
